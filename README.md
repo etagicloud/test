@@ -2,6 +2,27 @@
 
 Тестовая страница на `https://megorov.com`. Next.js 15 + Postgres 16, дашборд про аналитику, считает визиты в реальном времени.
 
+## Открыть в VS Code
+
+```bash
+code C:\beget\test
+```
+
+При первом открытии VS Code предложит установить рекомендованные расширения
+(Docker, Tailwind, ESLint, GitLens) — соглашайся.
+
+Дальше: `Ctrl+Shift+B` → запустится таска **«Старт локалки (БД + dev)»**.
+Через 5–15 сек откроется http://localhost:3000.
+
+Все таски (Ctrl+Shift+P → «Tasks: Run Task»):
+
+| Таска | Что делает |
+|-------|-----------|
+| **Старт локалки (БД + dev)** | поднимает Postgres в Docker + `npm run dev` с hot-reload |
+| **Стоп локалки** | гасит контейнер БД |
+| **Полностью в Docker (без Node)** | если хочешь без `npm` — собирает app в контейнере |
+| **Сбросить локалку** | пересоздаёт БД и `node_modules` с нуля |
+
 ## Локальная разработка
 
 Один раз: установить [Docker Desktop](https://www.docker.com/products/docker-desktop/) и Node 20+.

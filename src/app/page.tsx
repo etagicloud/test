@@ -17,9 +17,11 @@ async function loadAndRecord(): Promise<{ stats: Stats; error: string | null }> 
     const stats = await getStats();
     return { stats, error: null };
   } catch (err) {
+    console.error("[page] DB error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
     return {
       stats: { total: 0, today: 0, lastHour: 0, uniqueIps: 0, byHour: [] },
-      error: err instanceof Error ? err.message : String(err),
+      error: msg || "Не удалось подключиться к БД (см. логи dev-сервера)",
     };
   }
 }
@@ -40,19 +42,19 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur transition hover:border-white/20 hover:bg-white/[0.04]">
+    <div className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-300 hover:shadow-md">
       <div
-        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-3xl transition group-hover:opacity-40"
+        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-30 blur-3xl transition group-hover:opacity-50"
         style={{ background: accent }}
       />
       <div className="relative">
-        <div className="text-xs uppercase tracking-widest text-white/50">
+        <div className="text-xs uppercase tracking-widest text-zinc-500">
           {label}
         </div>
-        <div className="mt-3 font-mono text-4xl font-semibold tabular-nums text-white">
+        <div className="mt-3 font-mono text-4xl font-semibold tabular-nums text-zinc-900">
           {value}
         </div>
-        <div className="mt-2 text-xs text-white/40">{hint}</div>
+        <div className="mt-2 text-xs text-zinc-400">{hint}</div>
       </div>
     </div>
   );
@@ -61,7 +63,7 @@ function StatCard({
 function HourlyBars({ data }: { data: Stats["byHour"] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center text-sm text-white/30">
+      <div className="flex h-40 items-center justify-center text-sm text-zinc-400">
         Пока нет визитов за 24 часа
       </div>
     );
@@ -77,7 +79,7 @@ function HourlyBars({ data }: { data: Stats["byHour"] }) {
           <div
             key={d.hour}
             title={label}
-            className="flex-1 rounded-t bg-gradient-to-t from-indigo-500/40 to-fuchsia-400/80 transition hover:from-indigo-400/80 hover:to-fuchsia-300"
+            className="flex-1 rounded-t bg-gradient-to-t from-indigo-300 to-fuchsia-500 transition hover:from-indigo-400 hover:to-fuchsia-600"
             style={{ height: `${h}%` }}
           />
         );
@@ -92,39 +94,37 @@ export default async function Home() {
   const commit = (process.env.SOURCE_COMMIT ?? "dev").slice(0, 7);
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden">
+    <main className="relative isolate min-h-screen overflow-hidden bg-white">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 rounded-full bg-indigo-500/20 blur-[120px]" />
-        <div className="absolute right-0 top-1/3 h-[400px] w-[600px] rounded-full bg-fuchsia-500/15 blur-[100px]" />
-        <div className="absolute bottom-0 left-1/4 h-[400px] w-[600px] rounded-full bg-cyan-500/10 blur-[100px]" />
+        <div className="absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 rounded-full bg-indigo-200/40 blur-[120px]" />
+        <div className="absolute right-0 top-1/3 h-[400px] w-[600px] rounded-full bg-fuchsia-200/40 blur-[100px]" />
+        <div className="absolute bottom-0 left-1/4 h-[400px] w-[600px] rounded-full bg-cyan-200/40 blur-[100px]" />
       </div>
 
       <div className="mx-auto max-w-6xl px-6 py-10 sm:py-16">
         <header className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-white/60">
+          <div className="flex items-center gap-2 text-sm text-zinc-500">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
             online
           </div>
-          <div className="font-mono text-xs text-white/40">
-            build · {commit}
-          </div>
+          <div className="font-mono text-xs text-zinc-400">build · {commit}</div>
         </header>
 
         <section className="pt-16 sm:pt-24">
-          <div className="text-xs uppercase tracking-[0.3em] text-white/40">
+          <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
             megorov · launchpad
           </div>
-          <h1 className="mt-4 bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-6xl font-bold leading-[1.05] tracking-tight text-transparent sm:text-8xl">
+          <h1 className="mt-4 text-6xl font-bold leading-[1.05] tracking-tight text-zinc-900 sm:text-8xl">
             Аналитика
             <br />
-            <span className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent">
               и данные
             </span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-white/60 sm:text-xl">
+          <p className="mt-6 max-w-xl text-lg text-zinc-600 sm:text-xl">
             Полигон для сервисов, ботов и пайплайнов. Каждый твой визит сохраняется
             в Postgres — это и есть первая метрика.
           </p>
@@ -157,12 +157,12 @@ export default async function Home() {
           />
         </section>
 
-        <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur">
+        <section className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="text-sm uppercase tracking-widest text-white/50">
+            <h2 className="text-sm uppercase tracking-widest text-zinc-500">
               Визиты по часам · последние 24h
             </h2>
-            <span className="font-mono text-xs text-white/30">
+            <span className="font-mono text-xs text-zinc-400">
               {stats.byHour.length} bins
             </span>
           </div>
@@ -170,13 +170,18 @@ export default async function Home() {
         </section>
 
         {error && (
-          <section className="mt-6 rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-            <div className="text-xs uppercase tracking-widest text-red-300/80">
+          <section className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="text-xs uppercase tracking-widest text-red-700">
               Ошибка БД
             </div>
-            <pre className="mt-2 overflow-x-auto font-mono text-xs text-red-200/90">
+            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs text-red-900">
               {error}
             </pre>
+            <div className="mt-3 text-xs text-red-700/80">
+              Полный стек — в терминале <code className="font-mono">npm run dev</code>.
+              Локально проверь: <code className="font-mono">docker compose ps</code> →
+              контейнер <code className="font-mono">test-db-1</code> должен быть healthy.
+            </div>
           </section>
         )}
 
@@ -184,7 +189,7 @@ export default async function Home() {
           {[
             {
               title: "Стек",
-              body: "Next.js 15 · TypeScript · Tailwind v4 · Postgres 16",
+              body: "Next.js 15 · TypeScript · Tailwind 3.4 · Postgres 16",
             },
             {
               title: "Деплой",
@@ -197,17 +202,17 @@ export default async function Home() {
           ].map((c) => (
             <div
               key={c.title}
-              className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
+              className="rounded-xl border border-zinc-200 bg-white/60 p-4 shadow-sm"
             >
-              <div className="text-xs uppercase tracking-widest text-white/40">
+              <div className="text-xs uppercase tracking-widest text-zinc-500">
                 {c.title}
               </div>
-              <div className="mt-2 text-sm text-white/80">{c.body}</div>
+              <div className="mt-2 text-sm text-zinc-700">{c.body}</div>
             </div>
           ))}
         </section>
 
-        <footer className="mt-16 flex flex-col items-start justify-between gap-3 border-t border-white/5 pt-6 text-xs text-white/40 sm:flex-row sm:items-center">
+        <footer className="mt-16 flex flex-col items-start justify-between gap-3 border-t border-zinc-200 pt-6 text-xs text-zinc-400 sm:flex-row sm:items-center">
           <div className="font-mono">
             built · {builtAt.slice(0, 19).replace("T", " ")} UTC
           </div>
@@ -215,7 +220,7 @@ export default async function Home() {
             href="https://github.com/etagicloud/test"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono transition hover:text-white"
+            className="font-mono transition hover:text-zinc-700"
           >
             github.com/etagicloud/test ↗
           </a>

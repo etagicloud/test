@@ -10,6 +10,7 @@ export const pool: Pool =
     connectionString: process.env.DATABASE_URL,
     max: 5,
     idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
   });
 
 if (process.env.NODE_ENV !== "production") global.__pgPool = pool;
