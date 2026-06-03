@@ -185,6 +185,20 @@ export default async function Home() {
           </section>
         )}
 
+        <section className="mt-10">
+          <div className="mb-3 text-xs uppercase tracking-widest text-zinc-500">
+            Инструменты
+          </div>
+          <a
+            href="/vacation"
+            className="inline-flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:shadow-md"
+          >
+            <span className="text-base">📄</span>
+            <span>Заявление на отпуск → PDF/A</span>
+            <span className="font-mono text-xs text-zinc-400">/vacation</span>
+          </a>
+        </section>
+
         <section className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             {
