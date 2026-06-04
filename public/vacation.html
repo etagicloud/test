@@ -538,6 +538,21 @@ btn.addEventListener('click', async function(){
     a.download = base + (d.fio ? ' — ' + d.fio : '') + '.pdf';
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
+    // Fire-and-forget: пишем в статистику только при работе через сайт (http/https),
+    // при открытии файла локально (file://) этот POST просто провалится молча.
+    if (location.protocol === 'http:' || location.protocol === 'https:'){
+      fetch('/api/vacation/log', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({
+          template: currentTpl,
+          fio: d.fio,
+          dateStart: dateStart.value || null,
+          dateEnd: dateEnd.value || null,
+          days: Number(days.value) || null
+        })
+      }).catch(function(){});
+    }
     btn.textContent = 'Готово ✓ — Скачать ещё раз';
     setTimeout(function(){ btn.textContent = 'Скачать PDF/A'; }, 4000);
   }catch(e){
