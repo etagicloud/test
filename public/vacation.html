@@ -536,6 +536,7 @@ dateStart.addEventListener('change', function(){
   // если конечная теперь невалидна — очищаем (пусть юзер выберет заново)
   if (dateStart.value && dateEnd.value && dateEnd.value < dateStart.value){
     dateEnd.value = '';
+    days.value = '';
   }
   daysManual = false;
   recalcDays();
