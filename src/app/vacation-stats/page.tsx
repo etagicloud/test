@@ -42,6 +42,9 @@ type Stats = {
 
 const PW_KEY = "vac-stats-pw";
 
+type Filters = { org: string; template: string };
+const NO_FILTERS: Filters = { org: "", template: "" };
+
 const fmt = (n: number) => new Intl.NumberFormat("ru-RU").format(n);
 const fmtDateTime = (iso: string) => {
   const d = new Date(iso);
@@ -58,15 +61,17 @@ export default function VacationStatsPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [auto, setAuto] = useState(true);
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
+  const [downloading, setDownloading] = useState(false);
 
-  const load = useCallback(async (password: string): Promise<boolean> => {
+  const load = useCallback(async (password: string, f: Filters = NO_FILTERS): Promise<boolean> => {
     setLoading(true);
     setErr("");
     try {
       const r = await fetch("/api/vacation/stats", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, org: f.org || undefined, template: f.template || undefined }),
       });
       if (r.status === 401) {
         setErr("Неверный пароль");
@@ -94,10 +99,40 @@ export default function VacationStatsPage() {
     const saved = typeof window !== "undefined" ? sessionStorage.getItem(PW_KEY) : null;
     if (saved) {
       setPw(saved);
-      void load(saved);
+      void load(saved, NO_FILTERS);
     }
     setAuto(false);
   }, [load]);
+
+  // refetch when filters change (only after first successful auth)
+  useEffect(() => {
+    if (stats && pw) void load(pw, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.org, filters.template]);
+
+  async function downloadCsv() {
+    setDownloading(true);
+    try {
+      const r = await fetch("/api/vacation/export", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: pw, org: filters.org || undefined, template: filters.template || undefined }),
+      });
+      if (!r.ok) {
+        alert("Не удалось скачать CSV: " + r.statusText);
+        return;
+      }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `vacation-generations-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   if (!stats) {
     return (
@@ -133,18 +168,65 @@ export default function VacationStatsPage() {
   return (
     <main className="min-h-dvh bg-zinc-50 p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex items-baseline justify-between">
+        <header className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-xl font-semibold text-zinc-900">Статистика заявлений</h1>
             <p className="text-sm text-zinc-500">Сводка по генерациям PDF/A через /vacation</p>
           </div>
-          <button
-            onClick={() => { sessionStorage.removeItem(PW_KEY); setStats(null); setPw(""); }}
-            className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
-          >
-            выйти
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={downloadCsv}
+              disabled={downloading || loading}
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50 disabled:opacity-50"
+            >
+              {downloading ? "Готовлю…" : "Скачать CSV"}
+            </button>
+            <button
+              onClick={() => { sessionStorage.removeItem(PW_KEY); setStats(null); setPw(""); setFilters(NO_FILTERS); }}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+            >
+              выйти
+            </button>
+          </div>
         </header>
+
+        {/* Filters */}
+        <section className="rounded-2xl border border-zinc-200 bg-white p-4 flex flex-wrap items-end gap-4">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-xs uppercase tracking-wider text-zinc-500 mb-1">Организация</label>
+            <select
+              value={filters.org}
+              onChange={(e) => setFilters((f) => ({ ...f, org: e.target.value }))}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">Все</option>
+              <option value="etagi">ООО «Этажи»</option>
+              <option value="esoft">ООО «Е-софт»</option>
+            </select>
+          </div>
+          <div className="flex-1 min-w-[220px]">
+            <label className="block text-xs uppercase tracking-wider text-zinc-500 mb-1">Шаблон</label>
+            <select
+              value={filters.template}
+              onChange={(e) => setFilters((f) => ({ ...f, template: e.target.value }))}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">Все шаблоны</option>
+              {Object.entries(TEMPLATE_LABEL).map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+          </div>
+          {(filters.org || filters.template) && (
+            <button
+              onClick={() => setFilters(NO_FILTERS)}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900 underline self-end py-2"
+            >
+              сбросить
+            </button>
+          )}
+          {loading && <span className="text-xs text-zinc-400 self-end py-2">обновляю…</span>}
+        </section>
 
         {/* KPI */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
