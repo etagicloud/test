@@ -47,6 +47,9 @@
   .note{margin-top:12px; font-size:12.5px; color:var(--muted)}
   .note b{color:#384150}
   .err{margin-top:10px; color:#b91c1c; font-size:13px; font-weight:600; min-height:1em}
+  .date-err{color:#b91c1c; font-size:12.5px; font-weight:600; margin-top:-8px; margin-bottom:12px}
+  input[type=date].invalid{border-color:#b91c1c; background:#fef2f2}
+  input[type=date].invalid:focus{box-shadow:0 0 0 3px rgba(185,28,28,.15)}
 
   /* ---------- Меню шаблонов (левая колонка) ---------- */
   .tpl-menu{padding:18px 14px; position:sticky; top:24px}
@@ -132,6 +135,7 @@
         <input type="date" id="dateEnd">
       </div>
     </div>
+    <div class="date-err" id="dateErr" hidden></div>
 
     <div class="row-days">
       <div class="field" style="margin-bottom:0">
@@ -511,8 +515,39 @@ function validate(){
   return '';
 }
 
+function checkDateRange(){
+  var a = dateStart.value, b = dateEnd.value;
+  var bad = !!(a && b && b < a);
+  dateEnd.classList.toggle('invalid', bad);
+  var msg = $('dateErr');
+  if (bad){
+    msg.textContent = 'Дата окончания не может быть раньше даты начала';
+    msg.hidden = false;
+  } else {
+    msg.hidden = true;
+  }
+  return !bad;
+}
+
 [addr1,addr2,fio,body,appDate].forEach(function(i){ i.addEventListener('input', render); });
-[dateStart,dateEnd].forEach(function(i){ i.addEventListener('change', function(){ daysManual=false; recalcDays(); render(); }); });
+dateStart.addEventListener('change', function(){
+  // календарь второго инпута: не давать выбирать раньше даты начала
+  dateEnd.min = dateStart.value || '';
+  // если конечная теперь невалидна — очищаем (пусть юзер выберет заново)
+  if (dateStart.value && dateEnd.value && dateEnd.value < dateStart.value){
+    dateEnd.value = '';
+  }
+  daysManual = false;
+  recalcDays();
+  checkDateRange();
+  render();
+});
+dateEnd.addEventListener('change', function(){
+  daysManual = false;
+  recalcDays();
+  checkDateRange();
+  render();
+});
 days.addEventListener('input', function(){ daysManual=true; render(); });
 tplMenu.addEventListener('click', function(e){
   var b = e.target.closest('.tpl-btn'); if (b) applyTemplate(b.getAttribute('data-tpl'));
