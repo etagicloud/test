@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getVacationFullList } from "@/lib/db";
-import { passwordOk, parseFilters } from "../stats/route";
+import { passwordOk, parseFilters } from "@/lib/vacation-auth";
 
 export const dynamic = "force-dynamic";
 
